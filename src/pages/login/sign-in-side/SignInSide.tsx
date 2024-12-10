@@ -3,13 +3,16 @@ import Stack from "@mui/material/Stack";
 import SignInCard from "../../../components/sign-in-side/SignInCard.tsx";
 import Content from "../../../components/sign-in-side/Content.tsx";
 import AppTheme from "../../../shared-theme/AppTheme";
-import ColorModeSelect from "../../../shared-theme/ColorModeSelect";
+import ColorModeIconDropdown from "../../../shared-theme/ColorModeIconDropdown.tsx";
 
 export default function SignInSide(props: { disableCustomTheme?: boolean }) {
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
-      <ColorModeSelect sx={{ position: "fixed", top: "1rem", right: "1rem" }} />
+      <ColorModeIconDropdown
+        size="medium"
+        sx={{ position: "fixed", top: "1rem", right: "1rem" }}
+      />
       <Stack
         direction="column"
         component="main"
