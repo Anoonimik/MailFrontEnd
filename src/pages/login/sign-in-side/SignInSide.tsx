@@ -15,10 +15,12 @@ export default function SignInSide(props: { disableCustomTheme?: boolean }) {
         component="main"
         sx={[
           {
+            display: "flex",
             justifyContent: "center",
-            height: "calc((1 - var(--template-frame-height, 0)) * 100%)",
-            marginTop: "max(40px - var(--template-frame-height, 0px), 0px)",
-            minHeight: "100%",
+            alignItems: "center",
+            height: "100vh", // Высота 100% окна просмотра
+            width: "100%", // Ширина 100% доступного пространства
+            margin: 0, // Убираем отступы
           },
           (theme) => ({
             "&::before": {

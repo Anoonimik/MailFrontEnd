@@ -11,7 +11,6 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
 import ForgotPassword from "./ForgotPassword.tsx";
-import { SitemarkIcon } from "./CustomIcons.tsx";
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: "flex",
@@ -87,9 +86,7 @@ export default function SignInCard() {
 
   return (
     <Card variant="outlined">
-      <Box sx={{ display: { xs: "flex", md: "none" } }}>
-        <SitemarkIcon />
-      </Box>
+      <Box sx={{ display: { xs: "flex", md: "none" } }}></Box>
       <Typography
         component="h1"
         variant="h4"
