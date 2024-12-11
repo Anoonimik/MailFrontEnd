@@ -1,3 +1,5 @@
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
 import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid2";
 import Stack from "@mui/material/Stack";
@@ -8,45 +10,43 @@ import QueryStatsRoundedIcon from "@mui/icons-material/QueryStatsRounded";
 import SettingsSuggestRoundedIcon from "@mui/icons-material/SettingsSuggestRounded";
 import SupportAgentRoundedIcon from "@mui/icons-material/SupportAgentRounded";
 import ThumbUpAltRoundedIcon from "@mui/icons-material/ThumbUpAltRounded";
-import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
 
 const items = [
   {
     icon: <SettingsSuggestRoundedIcon />,
-    title: "Adaptable performance",
+    title: "Adaptable Performance",
     description:
-      "Our product effortlessly adjusts to your needs, boosting efficiency and simplifying your tasks.",
+      "Our app seamlessly adapts to your needs, enhancing efficiency and streamlining your workflows.",
   },
   {
     icon: <ConstructionRoundedIcon />,
-    title: "Built to last",
+    title: "Built to Last",
     description:
-      "Experience unmatched durability that goes above and beyond with lasting investment.",
+      "Experience unparalleled reliability, providing a long-lasting investment for your support team.",
   },
   {
     icon: <ThumbUpAltRoundedIcon />,
-    title: "Great user experience",
+    title: "Great User Experience",
     description:
-      "Integrate our product into your routine with an intuitive and easy-to-use interface.",
+      "Easily integrate our app into your routine with an intuitive and user-friendly interface.",
   },
   {
     icon: <AutoFixHighRoundedIcon />,
-    title: "Innovative functionality",
+    title: "Innovative Functionality",
     description:
-      "Stay ahead with features that set new standards, addressing your evolving needs better than the rest.",
+      "Stay ahead with features that set new standards, better addressing the evolving needs of your support team.",
   },
   {
     icon: <SupportAgentRoundedIcon />,
-    title: "Reliable support",
+    title: "Reliable Support",
     description:
-      "Count on our responsive customer support, offering assistance that goes beyond the purchase.",
+      "Count on our responsive customer support that goes beyond the purchase, ensuring continuous assistance.",
   },
   {
     icon: <QueryStatsRoundedIcon />,
-    title: "Precision in every detail",
+    title: "Precision in Every Detail",
     description:
-      "Enjoy a meticulously crafted product where small touches make a significant impact on your overall experience.",
+      "Enjoy a meticulously crafted app where every detail contributes to an exceptional overall experience.",
   },
 ];
 
@@ -54,12 +54,14 @@ export default function Highlights() {
   return (
     <Box
       id="highlights"
-      sx={{
-        pt: { xs: 4, sm: 12 },
-        pb: { xs: 8, sm: 16 },
-        color: "white",
-        bgcolor: "grey.900",
-      }}
+      sx={(theme) => ({
+        py: { xs: 8 },
+        backgroundRepeat: "no-repeat",
+        backgroundImage: "white",
+        ...theme.applyStyles("dark", {
+          backgroundImage: "dark",
+        }),
+      })}
     >
       <Container
         sx={{
@@ -93,13 +95,15 @@ export default function Highlights() {
                 component={Card}
                 spacing={1}
                 useFlexGap
-                sx={{
-                  color: "inherit",
+                sx={(theme) => ({
                   p: 3,
                   height: "100%",
-                  borderColor: "hsla(220, 25%, 25%, 0.3)",
-                  backgroundColor: "grey.800",
-                }}
+                  borderColor: "dark",
+                  color: "black",
+                  ...theme.applyStyles("dark", {
+                    color: "hsl(0, 0%, 100%)",
+                  }),
+                })}
               >
                 <Box sx={{ opacity: "50%" }}>{item.icon}</Box>
                 <div>

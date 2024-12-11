@@ -1,8 +1,9 @@
-import SvgIcon from "@mui/material/SvgIcon";
+import * as React from 'react';
+import SvgIcon from '@mui/material/SvgIcon';
 
 export function SitemarkIcon() {
   return (
-    <SvgIcon sx={{ height: 21, width: 100, mr: 2 }}>
+    <SvgIcon sx={{ height: 21, width: 100 }}>
       <svg
         width={86}
         height={19}
