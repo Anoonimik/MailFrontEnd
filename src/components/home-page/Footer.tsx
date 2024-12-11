@@ -10,7 +10,6 @@ import Typography from "@mui/material/Typography";
 import FacebookIcon from "@mui/icons-material/Facebook";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import TwitterIcon from "@mui/icons-material/Twitter";
-import SitemarkIcon from "./SitemarkIcon.tsx";
 
 function Copyright() {
   return (
