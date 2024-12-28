@@ -16,6 +16,14 @@ import { styled } from "@mui/material/styles";
 import ForgotPassword from "../../../components/login-page/ForgotPassword.tsx";
 import AppTheme from "../../../shared-theme/AppTheme";
 import LoginBar from "../../../components/login-page/LoginBar.tsx";
+import { useNavigate } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "../../../hooks/redux";
+import {
+  loginStart,
+  loginSuccess,
+  loginFailure,
+} from "../../../store/slices/authSlice";
+import { loginAPI } from "../../../api/auth";
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: "flex",
@@ -60,11 +68,16 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
 }));
 
 export default function SignIn(props: { disableCustomTheme?: boolean }) {
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { loading, error } = useAppSelector((state) => state.auth);
+
   const [emailError, setEmailError] = React.useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = React.useState("");
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState("");
   const [open, setOpen] = React.useState(false);
+  const [rememberMe, setRememberMe] = React.useState(false);
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -74,16 +87,33 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
     setOpen(false);
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    if (emailError || passwordError) {
-      event.preventDefault();
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!validateInputs()) {
       return;
     }
-    const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get("email"),
-      password: data.get("password"),
-    });
+
+    try {
+      dispatch(loginStart());
+
+      const data = new FormData(event.currentTarget);
+      const credentials = {
+        email: data.get("email") as string,
+        password: data.get("password") as string,
+        rememberMe,
+      };
+
+      const response = await loginAPI(credentials);
+      dispatch(loginSuccess({ email: response.user.email }));
+      navigate("/dashboard"); // или куда вам нужно после успешного входа
+    } catch (error) {
+      dispatch(
+        loginFailure(
+          error instanceof Error ? error.message : "An error occurred",
+        ),
+      );
+    }
   };
 
   const validateInputs = () => {
@@ -151,6 +181,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                 required
                 fullWidth
                 variant="outlined"
+                disabled={loading}
                 color={emailError ? "error" : "primary"}
               />
             </FormControl>
@@ -160,19 +191,31 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                 error={passwordError}
                 helperText={passwordErrorMessage}
                 name="password"
-                placeholder="••••••"
+                placeholder="• • • • • •"
                 type="password"
                 id="password"
                 autoComplete="current-password"
-                autoFocus
                 required
                 fullWidth
                 variant="outlined"
+                disabled={loading}
                 color={passwordError ? "error" : "primary"}
               />
             </FormControl>
+            {error && (
+              <Typography color="error" sx={{ mt: 1, textAlign: "left" }}>
+                {error}
+              </Typography>
+            )}
             <FormControlLabel
-              control={<Checkbox value="remember" color="primary" />}
+              control={
+                <Checkbox
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  color="primary"
+                  disabled={loading}
+                />
+              }
               label="Remember me"
             />
             <ForgotPassword open={open} handleClose={handleClose} />
@@ -180,9 +223,9 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
               type="submit"
               fullWidth
               variant="contained"
-              onClick={validateInputs}
+              disabled={loading}
             >
-              Sign in
+              {loading ? "Signing in..." : "Sign in"}
             </Button>
             <Link
               component="button"
@@ -190,6 +233,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
               onClick={handleClickOpen}
               variant="body2"
               sx={{ alignSelf: "center" }}
+              disabled={loading}
             >
               Forgot your password?
             </Link>
@@ -199,7 +243,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
             <Typography sx={{ textAlign: "center" }}>
               Don&apos;t have an account?{" "}
               <Link
-                href="/material-ui/getting-started/templates/sign-in/"
+                href="/register"
                 variant="body2"
                 sx={{ alignSelf: "center" }}
               >

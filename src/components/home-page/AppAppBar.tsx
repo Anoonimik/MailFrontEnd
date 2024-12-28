@@ -35,6 +35,10 @@ export default function AppAppBar() {
   const handleRedirect = () => {
     navigate("/login");
   };
+  const handleRegister = () => {
+    navigate("/register");
+  };
+
   const toggleDrawer = (newOpen: boolean) => () => {
     setOpen(newOpen);
   };
@@ -104,7 +108,12 @@ export default function AppAppBar() {
             >
               Sign in
             </Button>
-            <Button color="primary" variant="contained" size="small">
+            <Button
+              color="primary"
+              variant="contained"
+              size="small"
+              onClick={handleRegister}
+            >
               Sign up
             </Button>
             <ColorModeIconDropdown />
@@ -144,7 +153,12 @@ export default function AppAppBar() {
                 <MenuItem>Blog</MenuItem>
                 <Divider sx={{ my: 3 }} />
                 <MenuItem>
-                  <Button color="primary" variant="contained" fullWidth>
+                  <Button
+                    color="primary"
+                    variant="contained"
+                    fullWidth
+                    onClick={handleRegister}
+                  >
                     Sign up
                   </Button>
                 </MenuItem>

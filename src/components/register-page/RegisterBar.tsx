@@ -32,8 +32,8 @@ const StyledToolbar = styled(Toolbar)(({ theme }) => ({
 export default function AppAppBar() {
   const [open, setOpen] = React.useState(false);
   const navigate = useNavigate();
-  const handleRegister = () => {
-    navigate("/register");
+  const handleRedirect = () => {
+    navigate("/login");
   };
   const toggleDrawer = (newOpen: boolean) => () => {
     setOpen(newOpen);
@@ -100,9 +100,9 @@ export default function AppAppBar() {
               color="primary"
               variant="contained"
               fullWidth
-              onClick={handleRegister}
+              onClick={handleRedirect}
             >
-              Sign up
+              Sign in
             </Button>
             <ColorModeIconDropdown />
           </Box>
@@ -145,9 +145,9 @@ export default function AppAppBar() {
                     color="primary"
                     variant="contained"
                     fullWidth
-                    onClick={handleRegister}
+                    onClick={handleRedirect}
                   >
-                    Sign up
+                    Sign in
                   </Button>
                 </MenuItem>
               </Box>
