@@ -1,69 +1,62 @@
+import { LoginCredentials, LoginResponse, UserData } from "../store/types";
 import { TokenService } from "./tokenService";
-import { LoginCredentials, LoginResponse } from "../store/types";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000/api";
+const API_URL = import.meta.env.VITE_API_URL || "https://localhost:44338";
 
-export const AuthService = {
-  login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
-    try {
-      const response = await fetch(`${API_URL}/auth/login`, {
+export class AuthService {
+  static async login(credentials: LoginCredentials): Promise<LoginResponse> {
+    const response = await fetch(
+      `${API_URL}/${credentials.companyName}/login`,
+      {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(credentials),
-        credentials: "include", // Важно для работы с httpOnly cookies
-      });
+        body: JSON.stringify({
+          email: credentials.email,
+          password: credentials.password,
+        }),
+      },
+    );
 
-      if (!response.ok) {
-        throw new Error("Authentication failed");
-      }
-
-      const data = await response.json();
-
-      // Сохраняем токены
-      if (data.accessToken && data.refreshToken) {
-        TokenService.setTokens(data.accessToken, data.refreshToken);
-      }
-
-      return data;
-    } catch (error) {
-      throw new Error(error instanceof Error ? error.message : "Login failed");
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || "Authentication failed");
     }
-  },
 
-  refresh: async (): Promise<{ accessToken: string }> => {
-    try {
-      const response = await fetch(`${API_URL}/auth/refresh`, {
-        method: "POST",
-        credentials: "include", // Для отправки refreshToken в куки
-      });
+    const data = await response.json();
+    TokenService.setToken(data.accessToken);
+    return data;
+  }
 
-      if (!response.ok) {
-        throw new Error("Token refresh failed");
-      }
+  static async getUserData(): Promise<UserData> {
+    const response = await fetch(`${API_URL}/api/Client/get-user-info`, {
+      headers: {
+        Authorization: TokenService.getAuthHeader() || "",
+      },
+    });
 
-      const data = await response.json();
-
-      if (data.accessToken) {
-        document.cookie = `accessToken=${data.accessToken}; path=/; secure; samesite=strict; max-age=3600`;
-      }
-
-      return data;
-    } catch (error) {
-      throw new Error("Token refresh failed");
+    if (!response.ok) {
+      throw new Error("Failed to get user data");
     }
-  },
 
-  logout: async (): Promise<void> => {
-    try {
-      await fetch(`${API_URL}/auth/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
-      TokenService.removeTokens();
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
-  },
-};
+    return response.json();
+  }
+
+  static logout(): void {
+    TokenService.clearToken();
+  }
+
+  static async fetchWithAuth(url: string, options: RequestInit = {}) {
+    const headers = {
+      ...options.headers,
+      Authorization: TokenService.getAuthHeader() || "",
+      "Content-Type": "application/json",
+    };
+
+    return fetch(url, {
+      ...options,
+      headers,
+    });
+  }
+}

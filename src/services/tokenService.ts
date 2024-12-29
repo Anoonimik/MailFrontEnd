@@ -1,26 +1,30 @@
-export const TokenService = {
-  getAccessToken: (): string | null => {
-    return (
-      document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("accessToken="))
-        ?.split("=")[1] || null
-    );
-  },
+export class TokenService {
+  private static TOKEN_KEY = "accessToken";
 
-  setTokens: (accessToken: string, refreshToken: string): void => {
-    // Устанавливаем accessToken в куки с настройками безопасности
-    document.cookie = `accessToken=${accessToken}; path=/; secure; samesite=strict; max-age=3600`; // 1 час
+  static setToken(token: string): void {
+    localStorage.setItem(this.TOKEN_KEY, token);
+    console.log("Token set", token);
+    this.setAuthHeader(token);
+  }
 
-    // RefreshToken храним в httpOnly куки (устанавливается сервером)
-    // Здесь просто для примера
-    document.cookie = `refreshToken=${refreshToken}; path=/; secure; httponly; samesite=strict; max-age=2592000`; // 30 дней
-  },
+  static getToken(): string | null {
+    return localStorage.getItem(this.TOKEN_KEY);
+  }
 
-  removeTokens: (): void => {
-    document.cookie =
-      "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
-    document.cookie =
-      "refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
-  },
-};
+  static clearToken(): void {
+    localStorage.removeItem(this.TOKEN_KEY);
+    this.removeAuthHeader();
+  }
+
+  static setAuthHeader(token: string): void {
+    window.localStorage.setItem("authHeader", `Bearer ${token}`);
+  }
+
+  static removeAuthHeader(): void {
+    window.localStorage.removeItem("authHeader");
+  }
+
+  static getAuthHeader(): string | null {
+    return window.localStorage.getItem("authHeader");
+  }
+}

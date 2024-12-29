@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
@@ -13,17 +14,15 @@ import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 import MuiCard from "@mui/material/Card";
 import { styled } from "@mui/material/styles";
+import { useAppDispatch, useAppSelector } from "../../../hooks/redux";
+import {
+  login,
+  selectAuthError,
+  selectAuthLoading,
+} from "../../../store/slices/authSlice";
 import ForgotPassword from "../../../components/login-page/ForgotPassword.tsx";
 import AppTheme from "../../../shared-theme/AppTheme";
 import LoginBar from "../../../components/login-page/LoginBar.tsx";
-import { useNavigate } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "../../../hooks/redux";
-import {
-  loginStart,
-  loginSuccess,
-  loginFailure,
-} from "../../../store/slices/authSlice";
-import { loginAPI } from "../../../api/auth";
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: "flex",
@@ -67,84 +66,97 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
   },
 }));
 
-export default function SignIn(props: { disableCustomTheme?: boolean }) {
+interface SignInProps {
+  disableCustomTheme?: boolean;
+}
+
+export default function SignIn({ disableCustomTheme }: SignInProps) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { loading, error } = useAppSelector((state) => state.auth);
 
-  const [emailError, setEmailError] = React.useState(false);
-  const [emailErrorMessage, setEmailErrorMessage] = React.useState("");
-  const [passwordError, setPasswordError] = React.useState(false);
-  const [passwordErrorMessage, setPasswordErrorMessage] = React.useState("");
-  const [open, setOpen] = React.useState(false);
+  // Используем селекторы из slice
+  const loading = useAppSelector(selectAuthLoading);
+  const error = useAppSelector(selectAuthError);
+
+  const [formErrors, setFormErrors] = React.useState({
+    company: { error: false, message: "" },
+    email: { error: false, message: "" },
+    password: { error: false, message: "" },
+  });
   const [rememberMe, setRememberMe] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
 
-  const handleClickOpen = () => {
-    setOpen(true);
-  };
+  const handleClickOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
 
-  const handleClose = () => {
-    setOpen(false);
+  const validateInputs = (formData: FormData): boolean => {
+    const company = formData.get("company") as string;
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    const newErrors = {
+      company: { error: false, message: "" },
+      email: { error: false, message: "" },
+      password: { error: false, message: "" },
+    };
+
+    let isValid = true;
+
+    if (!company) {
+      newErrors.company = {
+        error: true,
+        message: "Company name is required.",
+      };
+      isValid = false;
+    }
+
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = {
+        error: true,
+        message: "Please enter a valid email address.",
+      };
+      isValid = false;
+    }
+
+    if (!password || password.length < 6) {
+      newErrors.password = {
+        error: true,
+        message: "Password must be at least 6 characters long.",
+      };
+      isValid = false;
+    }
+
+    setFormErrors(newErrors);
+    return isValid;
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!validateInputs()) {
+    if (!validateInputs(new FormData(event.currentTarget))) {
       return;
     }
 
+    const data = new FormData(event.currentTarget);
+    const credentials = {
+      companyName: data.get("company") as string,
+      email: data.get("email") as string,
+      password: data.get("password") as string,
+    };
+
     try {
-      dispatch(loginStart());
+      const resultAction = await dispatch(login(credentials));
 
-      const data = new FormData(event.currentTarget);
-      const credentials = {
-        email: data.get("email") as string,
-        password: data.get("password") as string,
-        rememberMe,
-      };
-
-      const response = await loginAPI(credentials);
-      dispatch(loginSuccess({ email: response.user.email }));
-      navigate("/dashboard"); // или куда вам нужно после успешного входа
-    } catch (error) {
-      dispatch(
-        loginFailure(
-          error instanceof Error ? error.message : "An error occurred",
-        ),
-      );
+      if (login.fulfilled.match(resultAction)) {
+        navigate("/");
+      }
+    } catch (err) {
+      console.error("Login failed:", err);
     }
-  };
-
-  const validateInputs = () => {
-    const email = document.getElementById("email") as HTMLInputElement;
-    const password = document.getElementById("password") as HTMLInputElement;
-
-    let isValid = true;
-
-    if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
-      setEmailError(true);
-      setEmailErrorMessage("Please enter a valid email address.");
-      isValid = false;
-    } else {
-      setEmailError(false);
-      setEmailErrorMessage("");
-    }
-
-    if (!password.value || password.value.length < 6) {
-      setPasswordError(true);
-      setPasswordErrorMessage("Password must be at least 6 characters long.");
-      isValid = false;
-    } else {
-      setPasswordError(false);
-      setPasswordErrorMessage("");
-    }
-
-    return isValid;
   };
 
   return (
-    <AppTheme {...props}>
+    <AppTheme disableCustomTheme={disableCustomTheme}>
       <CssBaseline enableColorScheme />
       <SignInContainer direction="column" justifyContent="space-between">
         <LoginBar />
@@ -156,6 +168,13 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
           >
             Sign in
           </Typography>
+
+          {error && (
+            <Typography color="error" sx={{ mt: 1, textAlign: "center" }}>
+              {error}
+            </Typography>
+          )}
+
           <Box
             component="form"
             onSubmit={handleSubmit}
@@ -168,28 +187,43 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
             }}
           >
             <FormControl>
+              <FormLabel htmlFor="company">Company</FormLabel>
+              <TextField
+                error={formErrors.company.error}
+                helperText={formErrors.company.message}
+                id="company"
+                name="company"
+                placeholder="Enter your company name"
+                autoComplete="organization"
+                required
+                fullWidth
+                variant="outlined"
+                disabled={loading}
+              />
+            </FormControl>
+
+            <FormControl>
               <FormLabel htmlFor="email">Email</FormLabel>
               <TextField
-                error={emailError}
-                helperText={emailErrorMessage}
+                error={formErrors.email.error}
+                helperText={formErrors.email.message}
                 id="email"
                 type="email"
                 name="email"
                 placeholder="your@email.com"
                 autoComplete="email"
-                autoFocus
                 required
                 fullWidth
                 variant="outlined"
                 disabled={loading}
-                color={emailError ? "error" : "primary"}
               />
             </FormControl>
+
             <FormControl>
               <FormLabel htmlFor="password">Password</FormLabel>
               <TextField
-                error={passwordError}
-                helperText={passwordErrorMessage}
+                error={formErrors.password.error}
+                helperText={formErrors.password.message}
                 name="password"
                 placeholder="• • • • • •"
                 type="password"
@@ -199,14 +233,9 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                 fullWidth
                 variant="outlined"
                 disabled={loading}
-                color={passwordError ? "error" : "primary"}
               />
             </FormControl>
-            {error && (
-              <Typography color="error" sx={{ mt: 1, textAlign: "left" }}>
-                {error}
-              </Typography>
-            )}
+
             <FormControlLabel
               control={
                 <Checkbox
@@ -218,7 +247,9 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
               }
               label="Remember me"
             />
+
             <ForgotPassword open={open} handleClose={handleClose} />
+
             <Button
               type="submit"
               fullWidth
@@ -227,6 +258,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
             >
               {loading ? "Signing in..." : "Sign in"}
             </Button>
+
             <Link
               component="button"
               type="button"
@@ -238,6 +270,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
               Forgot your password?
             </Link>
           </Box>
+
           <Divider>or</Divider>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <Typography sx={{ textAlign: "center" }}>

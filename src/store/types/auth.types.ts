@@ -1,21 +1,33 @@
-export interface AuthState {
-  isAuthenticated: boolean;
-  user: {
-    email: string;
-  } | null;
-  loading: boolean;
-  error: string | null;
-}
-
 export interface LoginCredentials {
+  companyName: string;
   email: string;
   password: string;
-  rememberMe: boolean;
 }
 
 export interface LoginResponse {
+  id: string;
+  role: string;
+  accessToken: string;
+  nickname: string;
+  email: string;
+}
+
+export interface AuthState {
   user: {
+    id: string;
+    role: string;
+    nickname: string;
     email: string;
-  };
-  token: string;
+  } | null;
+  isAuthenticated: boolean;
+  loading: boolean;
+  initialized: boolean;
+  error: string | null;
+}
+
+export interface UserData {
+  id: string;
+  role: string;
+  nickname: string;
+  email: string;
 }

@@ -11,8 +11,11 @@ import MenuItem from "@mui/material/MenuItem";
 import Drawer from "@mui/material/Drawer";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import LogoutIcon from "@mui/icons-material/Logout";
 import ColorModeIconDropdown from "../../shared-theme/ColorModeIconDropdown";
 import { useNavigate } from "react-router-dom";
+import { useAppSelector } from "../../hooks/redux";
+import { TokenService } from "../../services/tokenService";
 import HomeIcon from "@mui/icons-material/Home";
 
 const StyledToolbar = styled(Toolbar)(({ theme }) => ({
@@ -32,15 +35,102 @@ const StyledToolbar = styled(Toolbar)(({ theme }) => ({
 export default function AppAppBar() {
   const [open, setOpen] = React.useState(false);
   const navigate = useNavigate();
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
+
   const handleRedirect = () => {
     navigate("/login");
   };
+
   const handleRegister = () => {
     navigate("/register");
   };
 
+  const handleLogout = () => {
+    TokenService.clearToken();
+    navigate("/");
+    window.location.reload();
+  };
+
   const toggleDrawer = (newOpen: boolean) => () => {
     setOpen(newOpen);
+  };
+
+  const AuthButtons = () => {
+    if (isAuthenticated) {
+      return (
+        <Button
+          color="primary"
+          variant="outlined"
+          size="small"
+          onClick={handleLogout}
+          startIcon={<LogoutIcon />}
+        >
+          Logout
+        </Button>
+      );
+    }
+    return (
+      <>
+        <Button
+          color="primary"
+          variant="text"
+          size="small"
+          onClick={handleRedirect}
+        >
+          Sign in
+        </Button>
+        <Button
+          color="primary"
+          variant="contained"
+          size="small"
+          onClick={handleRegister}
+        >
+          Sign up
+        </Button>
+      </>
+    );
+  };
+
+  const MobileAuthButtons = () => {
+    if (isAuthenticated) {
+      return (
+        <MenuItem>
+          <Button
+            color="primary"
+            variant="outlined"
+            fullWidth
+            onClick={handleLogout}
+            startIcon={<LogoutIcon />}
+          >
+            Logout
+          </Button>
+        </MenuItem>
+      );
+    }
+    return (
+      <>
+        <MenuItem>
+          <Button
+            color="primary"
+            variant="contained"
+            fullWidth
+            onClick={handleRegister}
+          >
+            Sign up
+          </Button>
+        </MenuItem>
+        <MenuItem>
+          <Button
+            color="primary"
+            variant="outlined"
+            fullWidth
+            onClick={handleRedirect}
+          >
+            Sign in
+          </Button>
+        </MenuItem>
+      </>
+    );
   };
 
   return (
@@ -100,22 +190,7 @@ export default function AppAppBar() {
               alignItems: "center",
             }}
           >
-            <Button
-              color="primary"
-              variant="text"
-              size="small"
-              onClick={handleRedirect}
-            >
-              Sign in
-            </Button>
-            <Button
-              color="primary"
-              variant="contained"
-              size="small"
-              onClick={handleRegister}
-            >
-              Sign up
-            </Button>
+            <AuthButtons />
             <ColorModeIconDropdown />
           </Box>
           <Box sx={{ display: { xs: "flex", md: "none" }, gap: 1 }}>
@@ -134,17 +209,11 @@ export default function AppAppBar() {
               }}
             >
               <Box sx={{ p: 2, backgroundColor: "background.default" }}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                  }}
-                >
+                <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
                   <IconButton onClick={toggleDrawer(false)}>
                     <CloseRoundedIcon />
                   </IconButton>
                 </Box>
-
                 <MenuItem>Features</MenuItem>
                 <MenuItem>Testimonials</MenuItem>
                 <MenuItem>Highlights</MenuItem>
@@ -152,26 +221,7 @@ export default function AppAppBar() {
                 <MenuItem>FAQ</MenuItem>
                 <MenuItem>Blog</MenuItem>
                 <Divider sx={{ my: 3 }} />
-                <MenuItem>
-                  <Button
-                    color="primary"
-                    variant="contained"
-                    fullWidth
-                    onClick={handleRegister}
-                  >
-                    Sign up
-                  </Button>
-                </MenuItem>
-                <MenuItem>
-                  <Button
-                    color="primary"
-                    variant="outlined"
-                    fullWidth
-                    onClick={handleRedirect}
-                  >
-                    Sign in
-                  </Button>
-                </MenuItem>
+                <MobileAuthButtons />
               </Box>
             </Drawer>
           </Box>
