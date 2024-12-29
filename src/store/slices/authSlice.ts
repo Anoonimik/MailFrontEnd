@@ -29,10 +29,14 @@ export const initializeAuth = createAsyncThunk("auth/initialize", async () => {
   }
 });
 
+export interface LoginPayload extends LoginCredentials {
+  rememberMe: boolean;
+}
+
 export const login = createAsyncThunk(
   "auth/login",
-  async (credentials: LoginCredentials) => {
-    return await AuthService.login(credentials);
+  async ({ rememberMe, ...credentials }: LoginPayload) => {
+    return await AuthService.login(credentials, rememberMe);
   },
 );
 

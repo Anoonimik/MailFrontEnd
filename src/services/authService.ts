@@ -4,7 +4,10 @@ import { TokenService } from "./tokenService";
 const API_URL = import.meta.env.VITE_API_URL || "https://localhost:44338";
 
 export class AuthService {
-  static async login(credentials: LoginCredentials): Promise<LoginResponse> {
+  static async login(
+    credentials: LoginCredentials,
+    rememberMe: boolean = false,
+  ): Promise<LoginResponse> {
     const response = await fetch(
       `${API_URL}/${credentials.companyName}/login`,
       {
@@ -25,7 +28,7 @@ export class AuthService {
     }
 
     const data = await response.json();
-    TokenService.setToken(data.accessToken);
+    TokenService.setToken(data.accessToken, rememberMe);
     return data;
   }
 

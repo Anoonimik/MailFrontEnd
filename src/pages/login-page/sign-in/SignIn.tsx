@@ -142,6 +142,7 @@ export default function SignIn({ disableCustomTheme }: SignInProps) {
       companyName: data.get("company") as string,
       email: data.get("email") as string,
       password: data.get("password") as string,
+      rememberMe,
     };
 
     try {
