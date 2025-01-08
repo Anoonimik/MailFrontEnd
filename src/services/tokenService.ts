@@ -38,7 +38,6 @@ export class TokenService {
 
     return null;
   }
-
   static clearToken(): void {
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.REMEMBER_ME_KEY);
@@ -49,7 +48,6 @@ export class TokenService {
   static setAuthHeader(token: string): void {
     window.localStorage.setItem("authHeader", `Bearer ${token}`);
   }
-
   static removeAuthHeader(): void {
     window.localStorage.removeItem("authHeader");
   }

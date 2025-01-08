@@ -11,12 +11,16 @@ import MenuItem from "@mui/material/MenuItem";
 import Drawer from "@mui/material/Drawer";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
-import LogoutIcon from "@mui/icons-material/Logout";
 import ColorModeIconDropdown from "../../shared-theme/ColorModeIconDropdown";
 import { useNavigate } from "react-router-dom";
 import { useAppSelector } from "../../hooks/redux";
-import { TokenService } from "../../services/tokenService";
 import HomeIcon from "@mui/icons-material/Home";
+import OptionsMenu from "../dashboard/components/OptionsMenu.tsx";
+import Avatar from "@mui/material/Avatar";
+import Typography from "@mui/material/Typography";
+import Stack from "@mui/material/Stack";
+import { useSelector } from "react-redux";
+import { selectUser } from "../../store/slices/authSlice";
 
 const StyledToolbar = styled(Toolbar)(({ theme }) => ({
   display: "flex",
@@ -36,7 +40,6 @@ export default function AppAppBar() {
   const [open, setOpen] = React.useState(false);
   const navigate = useNavigate();
   const { isAuthenticated } = useAppSelector((state) => state.auth);
-
   const handleRedirect = () => {
     navigate("/login");
   };
@@ -45,20 +48,45 @@ export default function AppAppBar() {
     navigate("/register");
   };
 
-  const handleLogout = () => {
-    TokenService.clearToken();
-    navigate("/");
-    window.location.reload();
-  };
-
   const toggleDrawer = (newOpen: boolean) => () => {
     setOpen(newOpen);
   };
 
   const AuthButtons = () => {
+    const user = useSelector(selectUser);
+    console.log(user);
     if (isAuthenticated) {
       return (
-        <Button
+        <Stack
+          direction="row"
+          sx={{
+            p: 1,
+            gap: 1,
+            alignItems: "center",
+            borderColor: "divider",
+          }}
+        >
+          <Avatar
+            sizes="small"
+            alt={user?.nickname || ""}
+            src="/static/images/avatar/7.jpg"
+            sx={{ width: 36, height: 36 }}
+          />
+          <Box sx={{ mr: "auto" }}>
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 500, lineHeight: "16px" }}
+            >
+              {user?.nickname || "No name"}
+            </Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              {user?.email || "No email"}
+            </Typography>
+          </Box>
+          <OptionsMenu />
+        </Stack>
+
+        /*        <Button
           color="primary"
           variant="outlined"
           size="small"
@@ -66,7 +94,7 @@ export default function AppAppBar() {
           startIcon={<LogoutIcon />}
         >
           Logout
-        </Button>
+        </Button>*/
       );
     }
     return (
@@ -92,9 +120,39 @@ export default function AppAppBar() {
   };
 
   const MobileAuthButtons = () => {
+    const user = useSelector(selectUser);
     if (isAuthenticated) {
       return (
-        <MenuItem>
+        <Stack
+          direction="row"
+          sx={{
+            p: 1,
+            gap: 1,
+            alignItems: "center",
+            borderColor: "divider",
+          }}
+        >
+          <Avatar
+            sizes="small"
+            alt={user?.nickname || ""}
+            src="/static/images/avatar/7.jpg"
+            sx={{ width: 36, height: 36 }}
+          />
+          <Box sx={{ mr: "auto" }}>
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 500, lineHeight: "16px" }}
+            >
+              {user?.nickname || "No name"}
+            </Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              console.log(user?.email);
+              {user?.email || "No email"}
+            </Typography>
+          </Box>
+          <OptionsMenu />
+        </Stack>
+        /*<MenuItem>
           <Button
             color="primary"
             variant="outlined"
@@ -104,7 +162,7 @@ export default function AppAppBar() {
           >
             Logout
           </Button>
-        </MenuItem>
+        </MenuItem>*/
       );
     }
     return (

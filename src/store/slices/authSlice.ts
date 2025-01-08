@@ -22,6 +22,7 @@ export const initializeAuth = createAsyncThunk("auth/initialize", async () => {
   try {
     TokenService.setAuthHeader(token);
     const userData = await AuthService.getUserData();
+
     return userData;
   } catch (error) {
     TokenService.clearToken();

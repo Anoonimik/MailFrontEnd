@@ -4,6 +4,8 @@ import HomePage from "../../pages/home-page/HomePage.tsx";
 import SignUp from "../../pages/refister-page/sign-up/SignUp.tsx";
 import { ProtectedRoute } from "../../components/Routes/ProtectedRoute.tsx";
 import { PublicRoute } from "../../components/Routes/PublicRoute.tsx";
+import Dashboard from "../../pages/dashboard-page/Dashboard.tsx";
+import EmailBotsPage from "../../pages/bots-page/EmailBotsPage.tsx";
 
 const AppRouter = () => {
   return (
@@ -37,13 +39,29 @@ const AppRouter = () => {
         }
       />
 
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/email-bots"
+        element={
+          <ProtectedRoute>
+            <EmailBotsPage />
+          </ProtectedRoute>
+        }
+      />
       {/* Маршрут для несуществующих страниц */}
       <Route
         path="*"
         element={
-          <ProtectedRoute>
+          <PublicRoute>
             <h1>Страница не найдена</h1>
-          </ProtectedRoute>
+          </PublicRoute>
         }
       />
     </Routes>
