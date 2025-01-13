@@ -1,4 +1,6 @@
 import * as React from "react";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
@@ -13,9 +15,18 @@ import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 import MuiCard from "@mui/material/Card";
 import { styled } from "@mui/material/styles";
-import ForgotPassword from "../../../components/login-page/ForgotPassword.tsx";
 import AppTheme from "../../../shared-theme/AppTheme";
-import RegisterBar from "../../../components/register-page/RegisterBar.tsx";
+import RegisterBar from "../../../components/register-page/RegisterBar";
+import {
+  registerUser,
+  resetRegistration,
+  selectRegistrationLoading,
+  selectRegistrationError,
+  selectRegistrationSuccess,
+} from "../../../store/slices/registrationSlice";
+
+import { AppDispatch, RootState } from "../../../store";
+import { registrationService } from "../../../services/registrationService.ts";
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: "flex",
@@ -59,72 +70,145 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
   },
 }));
 
-export default function SignIn(props: { disableCustomTheme?: boolean }) {
-  const [emailError, setEmailError] = React.useState(false);
-  const [emailErrorMessage, setEmailErrorMessage] = React.useState("");
-  const [passwordError, setPasswordError] = React.useState(false);
-  const [passwordErrorMessage, setPasswordErrorMessage] = React.useState("");
-  const [companyError, setCompanyError] = React.useState(false);
-  const [companyErrorMessage, setCompanyErrorMessage] = React.useState("");
-  const [open, setOpen] = React.useState(false);
+interface SignUpProps {
+  disableCustomTheme?: boolean;
+}
 
-  const handleClickOpen = () => {
-    setOpen(true);
-  };
+interface FormErrors {
+  company: { error: boolean; message: string };
+  email: { error: boolean; message: string };
+  password: { error: boolean; message: string };
+  confirmPassword: { error: boolean; message: string };
+}
 
-  const handleClose = () => {
-    setOpen(false);
-  };
+export default function SignUp({ disableCustomTheme }: SignUpProps) {
+  const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  const formRef = React.useRef<HTMLFormElement>(null);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    if (emailError || passwordError) {
-      event.preventDefault();
-      return;
+  const loading = useSelector((state: RootState) =>
+    selectRegistrationLoading(state),
+  );
+  const error = useSelector((state: RootState) =>
+    selectRegistrationError(state),
+  );
+  const success = useSelector((state: RootState) =>
+    selectRegistrationSuccess(state),
+  );
+
+  const [formErrors, setFormErrors] = React.useState<FormErrors>({
+    company: { error: false, message: "" },
+    email: { error: false, message: "" },
+    password: { error: false, message: "" },
+    confirmPassword: { error: false, message: "" },
+  });
+
+  const [rememberMe, setRememberMe] = React.useState(false);
+
+  // Reset form after successful registration
+  React.useEffect(() => {
+    if (success) {
+      formRef.current?.reset();
+      dispatch(resetRegistration());
+      navigate("/login");
     }
-    const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get("email"),
-      password: data.get("password"),
-    });
-  };
+  }, [success, navigate, dispatch]);
 
-  const validateInputs = () => {
-    const company = document.getElementById("company") as HTMLInputElement;
-    const email = document.getElementById("email") as HTMLInputElement;
-    const password = document.getElementById("password") as HTMLInputElement;
+  const validateForm = (formData: FormData): boolean => {
+    const company = formData.get("company") as string;
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
+
+    const newErrors = {
+      company: { error: false, message: "" },
+      email: { error: false, message: "" },
+      password: { error: false, message: "" },
+      confirmPassword: { error: false, message: "" },
+    };
 
     let isValid = true;
-    if (!company.value) {
-      setCompanyError(true);
-      setCompanyErrorMessage("Please enter your company name.");
+
+    if (!company?.trim()) {
+      newErrors.company = {
+        error: true,
+        message: "Company name is required.",
+      };
       isValid = false;
-    } else {
-      setCompanyError(false);
-      setCompanyErrorMessage("");
-    }
-    if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
-      setEmailError(true);
-      setEmailErrorMessage("Please enter a valid email address.");
-      isValid = false;
-    } else {
-      setEmailError(false);
-      setEmailErrorMessage("");
     }
 
-    if (!password.value || password.value.length < 6) {
-      setPasswordError(true);
-      setPasswordErrorMessage("Password must be at least 6 characters long.");
+    if (!email?.trim() || !/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = {
+        error: true,
+        message: "Please enter a valid email address.",
+      };
       isValid = false;
-    } else {
-      setPasswordError(false);
-      setPasswordErrorMessage("");
     }
 
+    if (!password || password.length < 6) {
+      newErrors.password = {
+        error: true,
+        message: "Password must be at least 6 characters long.",
+      };
+      isValid = false;
+    }
+
+    if (password !== confirmPassword) {
+      newErrors.confirmPassword = {
+        error: true,
+        message: "Passwords do not match.",
+      };
+      isValid = false;
+    }
+
+    setFormErrors(newErrors);
     return isValid;
   };
 
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+
+    if (!validateForm(formData)) {
+      return;
+    }
+
+    const userData = {
+      email: (formData.get("email") as string).trim(),
+      password: formData.get("password") as string,
+      confirmPassword: formData.get("confirmPassword") as string,
+      companyName: (formData.get("company") as string).trim(),
+    };
+
+    if (rememberMe) {
+      registrationService.saveUserPreferences(
+        userData.email,
+        userData.companyName,
+      );
+    } else {
+      registrationService.clearUserPreferences();
+    }
+
+    dispatch(registerUser(userData));
+  };
+
+  // Load remembered data
+  React.useEffect(() => {
+    const { email: rememberedEmail, companyName: rememberedCompany } =
+      registrationService.getUserPreferences();
+
+    if (rememberedEmail || rememberedCompany) {
+      setRememberMe(true);
+      if (formRef.current) {
+        const elements = formRef.current.elements as any;
+        if (rememberedEmail) elements.email.value = rememberedEmail;
+        if (rememberedCompany) elements.company.value = rememberedCompany;
+      }
+    }
+  }, []);
+
   return (
-    <AppTheme {...props}>
+    <AppTheme disableCustomTheme={disableCustomTheme}>
       <CssBaseline enableColorScheme />
       <SignInContainer direction="column" justifyContent="space-between">
         <RegisterBar />
@@ -136,8 +220,16 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
           >
             Sign up
           </Typography>
+
+          {error && (
+            <Typography color="error" sx={{ mt: 1, textAlign: "center" }}>
+              {error}
+            </Typography>
+          )}
+
           <Box
             component="form"
+            ref={formRef}
             onSubmit={handleSubmit}
             noValidate
             sx={{
@@ -148,83 +240,98 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
             }}
           >
             <FormControl>
-              <FormLabel htmlFor="company">Email</FormLabel>
+              <FormLabel htmlFor="company">Company</FormLabel>
               <TextField
-                error={companyError}
-                helperText={companyErrorMessage}
+                error={formErrors.company.error}
+                helperText={formErrors.company.message}
                 id="company"
-                type="company"
                 name="company"
-                placeholder="your company name"
-                autoComplete="company"
-                autoFocus
+                placeholder="Enter your company name"
+                autoComplete="organization"
                 required
                 fullWidth
                 variant="outlined"
-                color={emailError ? "error" : "primary"}
+                disabled={loading}
               />
             </FormControl>
+
             <FormControl>
               <FormLabel htmlFor="email">Email</FormLabel>
               <TextField
-                error={emailError}
-                helperText={emailErrorMessage}
+                error={formErrors.email.error}
+                helperText={formErrors.email.message}
                 id="email"
                 type="email"
                 name="email"
                 placeholder="your@email.com"
                 autoComplete="email"
-                autoFocus
                 required
                 fullWidth
                 variant="outlined"
-                color={emailError ? "error" : "primary"}
+                disabled={loading}
               />
             </FormControl>
+
             <FormControl>
               <FormLabel htmlFor="password">Password</FormLabel>
               <TextField
-                error={passwordError}
-                helperText={passwordErrorMessage}
+                error={formErrors.password.error}
+                helperText={formErrors.password.message}
                 name="password"
                 placeholder="• • • • • •"
                 type="password"
                 id="password"
-                autoComplete="current-password"
-                autoFocus
+                autoComplete="new-password"
                 required
                 fullWidth
                 variant="outlined"
-                color={passwordError ? "error" : "primary"}
+                disabled={loading}
               />
             </FormControl>
+
+            <FormControl>
+              <FormLabel htmlFor="confirmPassword">Confirm Password</FormLabel>
+              <TextField
+                error={formErrors.confirmPassword.error}
+                helperText={formErrors.confirmPassword.message}
+                name="confirmPassword"
+                placeholder="• • • • • •"
+                type="password"
+                id="confirmPassword"
+                autoComplete="new-password"
+                required
+                fullWidth
+                variant="outlined"
+                disabled={loading}
+              />
+            </FormControl>
+
             <FormControlLabel
-              control={<Checkbox value="remember" color="primary" />}
+              control={
+                <Checkbox
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  color="primary"
+                  disabled={loading}
+                />
+              }
               label="Remember me"
             />
-            <ForgotPassword open={open} handleClose={handleClose} />
+
             <Button
               type="submit"
               fullWidth
               variant="contained"
-              onClick={validateInputs}
+              disabled={loading}
             >
-              Sign in
+              {loading ? "Signing up..." : "Sign up"}
             </Button>
-            <Link
-              component="button"
-              type="button"
-              onClick={handleClickOpen}
-              variant="body2"
-              sx={{ alignSelf: "center" }}
-            >
-              Forgot your password?
-            </Link>
           </Box>
+
           <Divider>or</Divider>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <Typography sx={{ textAlign: "center" }}>
-              Don&apos;t have an account?{" "}
+              Already have an account?{" "}
               <Link href="/login" variant="body2" sx={{ alignSelf: "center" }}>
                 Sign In
               </Link>
